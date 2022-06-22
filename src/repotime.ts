@@ -12,14 +12,22 @@ export class RepoTime {
     private statusBar?: vscode.StatusBarItem = undefined;
 
     public initialize(): void {
-        this.statusBar = vscode.window.createStatusBarItem(
-            vscode.StatusBarAlignment.Left,
-        );
-        this.statusBar?.show();
+        let configurations = vscode.workspace.getConfiguration('repotime');
+        let enableStatusBar = configurations.get('showStatus');
+        if (enableStatusBar) {
+            this.statusBar = vscode.window.createStatusBarItem(
+                vscode.StatusBarAlignment.Left,
+            );
+            this.statusBar?.show();
+        } else {
+            this.statusBar?.dispose();
+            this.statusBar = null;
+        }
+        console.log("enableStatusBar: " + enableStatusBar);
     }
 
     private updateStatusBarText(text?: string): void {
-        if (!this.statusBar) {return;}
+        if (!this.statusBar) { return; }
         if (!text) {
             this.statusBar.text = '$(clock)';
         } else {

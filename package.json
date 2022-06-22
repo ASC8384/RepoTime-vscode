@@ -20,7 +20,18 @@
 				"command": "repotime.helloWorld",
 				"title": "Hello World"
 			}
-		]
+		],
+		"configuration":{
+			"type": "object",
+			"title": "RepoTime configuration",
+			"properties": {
+				"repotime.showStatus": {
+					"type": "boolean",
+					"default": true,
+					"description": "Display coding status on the left status bar"
+				}
+			}
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
