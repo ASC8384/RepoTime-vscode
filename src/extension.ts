@@ -23,6 +23,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 	console.log('Congratulations, your extension "repotime" is now active!');
 
+	rt.initialize();
+
 	let editor = vscode.window.activeTextEditor;
 	if (editor) {
 		let doc = editor.document;
@@ -30,12 +32,10 @@ export function activate(context: vscode.ExtensionContext) {
 			let file: string = doc.fileName;
 			if (file) {
 				let disposable = vscode.commands.registerCommand('repotime.helloWorld', () => {
-					// Get project name and folder
-					// Display a message box to the user
-					vscode.window.showInformationMessage('Hello World from ' + rt.getCodeData("openTime") + '!');
-					vscode.window.showInformationMessage('Hello World from ' + rt.getCodeData("firstCodingTime") + '!');
-					vscode.window.showInformationMessage('Hello World from ' + rt.getCodeData("codingLong") + '!');
-					vscode.window.showInformationMessage('Hello World from ' + rt.getCodeData("lastCodingTime") + '!');
+					vscode.window.showInformationMessage(rt.getCodeData("openTime") + '!');
+					vscode.window.showInformationMessage(rt.getCodeData("firstCodingTime") + '!');
+					vscode.window.showInformationMessage(rt.getCodeData("codingLong") + '!');
+					vscode.window.showInformationMessage(rt.getCodeData("lastCodingTime") + '!');
 				});
 				context.subscriptions.push(disposable);
 			}

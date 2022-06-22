@@ -9,6 +9,23 @@ export class RepoTime {
         codingLong: 0,
         lastCodingTime: 0
     };
+    private statusBar?: vscode.StatusBarItem = undefined;
+
+    public initialize(): void {
+        this.statusBar = vscode.window.createStatusBarItem(
+            vscode.StatusBarAlignment.Left,
+        );
+        this.statusBar?.show();
+    }
+
+    private updateStatusBarText(text?: string): void {
+        if (!this.statusBar) {return;}
+        if (!text) {
+            this.statusBar.text = '$(clock)';
+        } else {
+            this.statusBar.text = '$(clock) ' + text;
+        }
+    }
 
     //Handler VSCode Event
     public EventHandler = {
@@ -30,6 +47,8 @@ export class RepoTime {
             }
             this.codeData.codingLong += 1000;
             this.codeData.lastCodingTime = now;
+            this.updateStatusBarText(utils.formatTime(this.codeData.codingLong));
+            console.log(utils.formatTime(this.codeData.codingLong));
         }
     };
 
@@ -63,7 +82,7 @@ export class RepoTime {
         return '';
     }
 
-    public getCodeData(foo): string {
-        return this.codeData[foo];
+    public getCodeData(foo: string): string {
+        return foo + ": " + this.codeData[foo];
     }
 }

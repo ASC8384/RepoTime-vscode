@@ -23,5 +23,24 @@ function cloneUri(uri) {
     return vscode.Uri.parse(uri.toString());
 }
 
+function formatTime(time):String {
+    var sec = Math.round(time / 1000);
+    var min = Math.round(sec / 60);
+    var hour = Math.round(min / 60);
+    sec = sec % 60;
+    min = min % 60;
+    hour = hour % 24;
 
-module.exports = { cloneTextDocument, cloneUri };
+    if (hour === 0){
+        if(min === 0){
+            return `${sec < 10 ? `0${sec}` : sec }s`;
+        }else{
+            return `${min < 10 ? `0${min}` : min }m ${sec < 10 ? `0${sec}` : sec }s`;
+        }
+    }else{
+        return `${hour < 10 ? `0${hour}` : hour }h ${min < 10 ? `0${min}` : min }m ${sec < 10 ? `0${sec}` : sec }s`;
+    }
+
+}
+
+module.exports = { cloneTextDocument, cloneUri, formatTime };
