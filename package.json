@@ -10,7 +10,7 @@
 		"Other"
 	],
 	"activationEvents": [
-        "onCommand:repotime.helloWorld"
+		"*"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -19,7 +19,23 @@
 				"command": "repotime.helloWorld",
 				"title": "Hello World"
 			}
-		]
+		],
+		"configuration":{
+			"type": "object",
+			"title": "RepoTime configuration",
+			"properties": {
+				"repotime.showStatus": {
+					"type": "boolean",
+					"default": true,
+					"description": "Display coding status on the left status bar"
+				},
+				"repotime.userid": {
+					"type": "string",
+					"default": "1",
+					"description": "Your user ID from the website"
+				}
+			}
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
@@ -40,6 +56,7 @@
 		"glob": "^8.0.3",
 		"mocha": "^10.0.0",
 		"typescript": "^4.7.2",
-		"@vscode/test-electron": "^2.1.3"
+		"@vscode/test-electron": "^2.1.3",
+		"axios": "^0.26.0"
 	}
 }
