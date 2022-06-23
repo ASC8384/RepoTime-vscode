@@ -2,7 +2,7 @@
   "name": "repotime",
 	"displayName": "RepoTime",
 	"description": " Visual Studio Code plugin for automatic time tracking and metrics generated from your coding activity.",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"engines": {
 		"vscode": "^1.67.0"
 	},
@@ -33,6 +33,21 @@
 					"type": "string",
 					"default": "1",
 					"description": "Your user ID from the website"
+				},
+				"repotime.minTime": {
+					"type": "number",
+					"default": 1,
+					"description": "Minimum recording time"
+				},
+				"repotime.maxTime": {
+					"type": "number",
+					"default": 10,
+					"description": "Maximum upload interval"
+				},
+				"repotime.serverURL": {
+					"type": "string",
+					"default": "http://106.15.48.207:8080",
+					"description": "Server's URL"
 				}
 			}
 		}

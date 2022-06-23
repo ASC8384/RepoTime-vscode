@@ -3,25 +3,42 @@ import * as os from 'os';
 var utils = require("./utils");
 const axios = require('axios');
 
-
 export class RepoTime {
     private userid: string;
     private os: string;
     private arch: string;
+    private minTime: number;
+    private maxTime: number;
     private codeData = {
         openTime: 0,
         firstCodingTime: 0,
         codingLong: 0,
+        nowcodingLong: 0,
         lastCodingTime: 0,
         language: ""
     };
+    private serverURL: string;
     private statusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left,
     );// vscode.StatusBarItem = undefined;
     private enableStatusBar: boolean;
-    private version = "0.1.0";
+    private version = "0.2.0";
     private ProjectFolder: string;
     private ProjectName: string;
+
+    // 需要忽略的一些模式
+    private INVALID_SCHEMES = [
+        // git 相关
+        'git-index',
+        'git',
+        // 输出
+        'output',
+        // 输入
+        'input',
+        // 预览
+        'private',
+        'markdown'
+    ];
 
     public initialize(): void {
         let editor = vscode.window.activeTextEditor;
@@ -39,13 +56,16 @@ export class RepoTime {
         }
         var now = Date.now();
         this.codeData.openTime = now;
-        this.codeData.codingLong = this.codeData.lastCodingTime = this.codeData.firstCodingTime = 0;
+        this.codeData.codingLong = this.codeData.nowcodingLong = this.codeData.lastCodingTime = this.codeData.firstCodingTime = 0;
     }
 
     public updateConfigurations(): void {
         var configurations = vscode.workspace.getConfiguration('repotime');
         this.enableStatusBar = configurations.get('showStatus');
         this.userid = configurations.get('userid');
+        this.minTime = Number(configurations.get('minTime')) * 1000;
+        this.maxTime = Number(configurations.get('maxTime')) * 1000;
+        this.serverURL = configurations.get('serverURL');
         // this.statusBar = vscode.window.createStatusBarItem(
         //     vscode.StatusBarAlignment.Left,
         // );
@@ -56,11 +76,45 @@ export class RepoTime {
             this.statusBar?.hide();
             console.log('Status bar icon disable.');
         }
-
         this.updateStatusBarText("");
         // console.log("enableStatusBar: " + this.enableStatusBar);
         // console.log(this.userid);
     }
+
+    //Handler VSCode Event
+    public EventHandler = {
+        onActiveFileChange: (doc) => {
+            this.postMan();
+            var now = Date.now();
+            this.codeData.language = this.getLanguage(doc);
+            this.codeData.openTime = now;
+            this.codeData.codingLong = this.codeData.nowcodingLong = this.codeData.lastCodingTime = this.codeData.firstCodingTime = 0;
+        },
+        onFileCoding: (doc) => {
+            //ignore event if it is not a coding action
+            if (!doc || this.INVALID_SCHEMES.indexOf(doc.uri.scheme) >= 0) { return; }
+            var now = Date.now();
+            //If time is too short to calling this function then just ignore it
+            if (this.isLegalTime(now)) {
+                //If is first time coding in this file, begin to record time
+                if (!this.codeData.firstCodingTime) {
+                    this.codeData.firstCodingTime = now;
+                }
+                // If need to upload
+                if (this.isNeedUpdate()) {
+                    this.postMan();
+                    this.codeData.nowcodingLong = 0;
+                    this.codeData.firstCodingTime = now - 1000;
+                }
+                this.codeData.codingLong += 1000;
+                this.codeData.nowcodingLong += 1000;
+                this.codeData.lastCodingTime = now;
+                this.updateStatusBarText(utils.formatTime(this.codeData.codingLong));
+            }
+            // console.log(utils.formatTime(this.codeData.codingLong));
+        }
+    };
+
 
     private updateStatusBarText(text?: string): void {
         if (!this.enableStatusBar) { return; }
@@ -85,7 +139,7 @@ export class RepoTime {
             params.append('editor', 'VSCode/' + vscode.version);
             const response = await axios({
                 method: 'post',
-                url: 'http://106.15.48.207:8080/addData',
+                url: `${this.serverURL}/addData`,
                 data: params
             });
             // console.log(response);
@@ -106,31 +160,14 @@ export class RepoTime {
         }
     }
 
-    //Handler VSCode Event
-    public EventHandler = {
-        onActiveFileChange: (doc) => {
-            this.postMan();
-            var now = Date.now();
-            this.codeData.language = this.getLanguage(doc);
-            this.codeData.openTime = now;
-            this.codeData.codingLong = this.codeData.lastCodingTime = this.codeData.firstCodingTime = 0;
-        },
-        onFileCoding: (doc) => {
-            //ignore event if it is not a coding action
-            if (!doc || doc.uri.scheme === 'git-index') { return; }
-            var now = Date.now();
-            //If time is too short to calling this function then just ignore it
-            if (now - 1000 < this.codeData.lastCodingTime) { return; }
-            //If is first time coding in this file, begin to record time
-            if (!this.codeData.firstCodingTime) {
-                this.codeData.firstCodingTime = now;
-            }
-            this.codeData.codingLong += 1000;
-            this.codeData.lastCodingTime = now;
-            this.updateStatusBarText(utils.formatTime(this.codeData.codingLong));
-            // console.log(utils.formatTime(this.codeData.codingLong));
-        }
-    };
+
+    private isNeedUpdate(): boolean {
+        return this.maxTime < this.codeData.nowcodingLong;
+    }
+
+    private isLegalTime(now: number): boolean {
+        return now - this.minTime >= this.codeData.lastCodingTime;
+    }
 
     public getProjectName(file: string): string {
         if (!vscode.workspace) { return ''; }

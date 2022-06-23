@@ -14,6 +14,16 @@ export function activate(context: vscode.ExtensionContext) {
 			e => {
 				return rt.EventHandler.onFileCoding((e || {}).document);
 			}));
+	// subscriptions.push(
+	// 	vscode.workspace.onDidSaveTextDocument(
+	// 		e => {
+	// 			return rt.EventHandler.onFileCoding((e || {}).document);
+	// 		}));
+	subscriptions.push(
+		vscode.window.onDidChangeTextEditorSelection(
+			e => {
+				return rt.EventHandler.onFileCoding((e || {}).textEditor.document);
+			}));
 	subscriptions.push(
 		vscode.window.onDidChangeActiveTextEditor(
 			e => {
@@ -29,23 +39,6 @@ export function activate(context: vscode.ExtensionContext) {
 	// vscode.workspace.onDidChangeConfiguration(rt.initialize);
 
 	console.log('Congratulations, your extension "repotime" is now active!');
-
-	let editor = vscode.window.activeTextEditor;
-	if (editor) {
-		let doc = editor.document;
-		if (doc) {
-			let file: string = doc.fileName;
-			if (file) {
-				let disposable = vscode.commands.registerCommand('repotime.helloWorld', () => {
-					vscode.window.showInformationMessage(rt.getCodeData("openTime") + '!');
-					vscode.window.showInformationMessage(rt.getCodeData("firstCodingTime") + '!');
-					vscode.window.showInformationMessage(rt.getCodeData("codingLong") + '!');
-					vscode.window.showInformationMessage(rt.getCodeData("lastCodingTime") + '!');
-				});
-				context.subscriptions.push(disposable);
-			}
-		}
-	}
 }
 
 export function deactivate() { }
