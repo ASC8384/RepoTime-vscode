@@ -19,11 +19,15 @@ export function activate(context: vscode.ExtensionContext) {
 			e => {
 				return rt.EventHandler.onActiveFileChange((e || {}).document);
 			}));
-
+	rt.initialize();
+	const { onDidChangeConfiguration } = vscode.workspace;
+	//Listening configurations
+	subscriptions.push(
+		onDidChangeConfiguration(() => rt.initialize())
+	);
+	// vscode.workspace.onDidChangeConfiguration(rt.initialize);
 
 	console.log('Congratulations, your extension "repotime" is now active!');
-
-	rt.initialize();
 
 	let editor = vscode.window.activeTextEditor;
 	if (editor) {

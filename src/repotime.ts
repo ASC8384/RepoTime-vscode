@@ -9,25 +9,32 @@ export class RepoTime {
         codingLong: 0,
         lastCodingTime: 0
     };
-    private statusBar?: vscode.StatusBarItem = undefined;
+    private statusBar = vscode.window.createStatusBarItem(
+        vscode.StatusBarAlignment.Left,
+    );// vscode.StatusBarItem = undefined;
+    private enableStatusBar: boolean;
 
     public initialize(): void {
-        let configurations = vscode.workspace.getConfiguration('repotime');
-        let enableStatusBar = configurations.get('showStatus');
-        if (enableStatusBar) {
-            this.statusBar = vscode.window.createStatusBarItem(
-                vscode.StatusBarAlignment.Left,
-            );
+        var configurations = vscode.workspace.getConfiguration('repotime');
+        this.enableStatusBar = configurations.get('showStatus');
+        // this.statusBar = vscode.window.createStatusBarItem(
+        //     vscode.StatusBarAlignment.Left,
+        // );
+        if (this.enableStatusBar) {
             this.statusBar?.show();
-        } else {
-            this.statusBar?.dispose();
-            this.statusBar = null;
+            console.log('Status bar icon enabled.');
+        }else{
+            this.statusBar?.hide();
+            console.log('Status bar icon disable.');
         }
-        console.log("enableStatusBar: " + enableStatusBar);
+
+        this.updateStatusBarText("");
+        console.log("enableStatusBar: " + this.enableStatusBar);
+        console.log(this.statusBar);
     }
 
     private updateStatusBarText(text?: string): void {
-        if (!this.statusBar) { return; }
+        if (!this.enableStatusBar) { return; }
         if (!text) {
             this.statusBar.text = '$(clock)';
         } else {
