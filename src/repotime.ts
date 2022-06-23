@@ -26,6 +26,20 @@ export class RepoTime {
     private ProjectFolder: string;
     private ProjectName: string;
 
+    // 需要忽略的一些模式
+    const INVALID_SCHEMES = [
+        // git 相关
+        'git-index',
+        'git',
+        // 输出
+        'output',
+        // 输入
+        'input',
+        // 预览
+        'private',
+        'markdown'
+    ];
+
     public initialize(): void {
         let editor = vscode.window.activeTextEditor;
         if (editor) {
@@ -66,6 +80,41 @@ export class RepoTime {
         // console.log("enableStatusBar: " + this.enableStatusBar);
         // console.log(this.userid);
     }
+
+    //Handler VSCode Event
+    public EventHandler = {
+        onActiveFileChange: (doc) => {
+            this.postMan();
+            var now = Date.now();
+            this.codeData.language = this.getLanguage(doc);
+            this.codeData.openTime = now;
+            this.codeData.codingLong = this.codeData.nowcodingLong = this.codeData.lastCodingTime = this.codeData.firstCodingTime = 0;
+        },
+        onFileCoding: (doc) => {
+            //ignore event if it is not a coding action
+            if (!doc || this.INVALID_SCHEMES.indexOf(doc.uri.scheme) >= 0) { return; }
+            var now = Date.now();
+            //If time is too short to calling this function then just ignore it
+            if (this.isLegalTime(now)) {
+                //If is first time coding in this file, begin to record time
+                if (!this.codeData.firstCodingTime) {
+                    this.codeData.firstCodingTime = now;
+                }
+                // If need to upload
+                if (this.isNeedUpdate()) {
+                    this.postMan();
+                    this.codeData.nowcodingLong = 0;
+                    this.codeData.firstCodingTime = now - 1000;
+                }
+                this.codeData.codingLong += 1000;
+                this.codeData.nowcodingLong += 1000;
+                this.codeData.lastCodingTime = now;
+                this.updateStatusBarText(utils.formatTime(this.codeData.codingLong));
+            }
+            // console.log(utils.formatTime(this.codeData.codingLong));
+        }
+    };
+
 
     private updateStatusBarText(text?: string): void {
         if (!this.enableStatusBar) { return; }
@@ -111,39 +160,6 @@ export class RepoTime {
         }
     }
 
-    //Handler VSCode Event
-    public EventHandler = {
-        onActiveFileChange: (doc) => {
-            this.postMan();
-            var now = Date.now();
-            this.codeData.language = this.getLanguage(doc);
-            this.codeData.openTime = now;
-            this.codeData.codingLong = this.codeData.nowcodingLong = this.codeData.lastCodingTime = this.codeData.firstCodingTime = 0;
-        },
-        onFileCoding: (doc) => {
-            //ignore event if it is not a coding action
-            if (!doc || doc.uri.scheme === 'git-index') { return; }
-            var now = Date.now();
-            //If time is too short to calling this function then just ignore it
-            if (this.isLegalTime(now)) {
-                //If is first time coding in this file, begin to record time
-                if (!this.codeData.firstCodingTime) {
-                    this.codeData.firstCodingTime = now;
-                }
-                // If need to upload
-                if(this.isNeedUpdate()){
-                    this.postMan();
-                    this.codeData.nowcodingLong = 0;
-                    this.codeData.firstCodingTime = now - 1000;
-                }
-                this.codeData.codingLong += 1000;
-                this.codeData.nowcodingLong += 1000;
-                this.codeData.lastCodingTime = now;
-                this.updateStatusBarText(utils.formatTime(this.codeData.codingLong));
-            }
-            // console.log(utils.formatTime(this.codeData.codingLong));
-        }
-    };
 
     private isNeedUpdate(): boolean {
         return this.maxTime < this.codeData.nowcodingLong;
