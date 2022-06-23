@@ -14,6 +14,16 @@ export function activate(context: vscode.ExtensionContext) {
 			e => {
 				return rt.EventHandler.onFileCoding((e || {}).document);
 			}));
+	// subscriptions.push(
+	// 	vscode.workspace.onDidSaveTextDocument(
+	// 		e => {
+	// 			return rt.EventHandler.onFileCoding((e || {}).document);
+	// 		}));
+	subscriptions.push(
+		vscode.window.onDidChangeTextEditorSelection(
+			e => {
+				return rt.EventHandler.onFileCoding((e || {}).textEditor.document);
+			}));
 	subscriptions.push(
 		vscode.window.onDidChangeActiveTextEditor(
 			e => {
