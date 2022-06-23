@@ -19,7 +19,7 @@ export class RepoTime {
         vscode.StatusBarAlignment.Left,
     );// vscode.StatusBarItem = undefined;
     private enableStatusBar: boolean;
-    private version = "0.0.1";
+    private version = "0.1.0";
     private ProjectFolder: string;
     private ProjectName: string;
 

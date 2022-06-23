@@ -2,7 +2,7 @@
   "name": "repotime",
 	"displayName": "RepoTime",
 	"description": " Visual Studio Code plugin for automatic time tracking and metrics generated from your coding activity.",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"engines": {
 		"vscode": "^1.67.0"
 	},
