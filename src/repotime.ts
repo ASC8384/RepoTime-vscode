@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 var utils = require("./utils");
+const axios = require('axios');
+
 
 export class RepoTime {
     private activeDocument;
@@ -13,8 +15,28 @@ export class RepoTime {
         vscode.StatusBarAlignment.Left,
     );// vscode.StatusBarItem = undefined;
     private enableStatusBar: boolean;
+    private version = "0.0.1";
+    private ProjectFolder;
+    private ProjectName;
 
     public initialize(): void {
+        let editor = vscode.window.activeTextEditor;
+        if (editor) {
+            let doc = editor.document;
+            if (doc) {
+                let file: string = doc.fileName;
+                if (file) {
+                    this.ProjectFolder = this.getProjectFolder(file);
+                    this.ProjectName = this.getProjectName(file);
+                }
+            }
+        }
+        var now = Date.now();
+        this.codeData.openTime = now;
+        this.codeData.codingLong = this.codeData.lastCodingTime = this.codeData.firstCodingTime = 0;
+    }
+
+    public updateConfigurations(): void {
         var configurations = vscode.workspace.getConfiguration('repotime');
         this.enableStatusBar = configurations.get('showStatus');
         // this.statusBar = vscode.window.createStatusBarItem(
@@ -23,7 +45,7 @@ export class RepoTime {
         if (this.enableStatusBar) {
             this.statusBar?.show();
             console.log('Status bar icon enabled.');
-        }else{
+        } else {
             this.statusBar?.hide();
             console.log('Status bar icon disable.');
         }
@@ -42,9 +64,53 @@ export class RepoTime {
         }
     }
 
+    private async postMan() {
+        if (this.codeData.firstCodingTime === 0) { return; }
+        try {
+            const params = new URLSearchParams();
+            params.append('userid', '1');
+            params.append('language', 'ts');
+            params.append('project', this.ProjectName);
+            params.append('os', 'windows');
+            params.append('stTime', utils.formatDate(this.codeData.firstCodingTime));
+            params.append('edTime', utils.formatDate(this.codeData.lastCodingTime));
+            params.append('editor', 'VSCode/' + vscode.version);
+            const response = await axios({
+                method: 'post',
+                url: 'http://106.15.48.207:8080/addData',
+                data: params
+                // data: JSON.stringify({
+                //     'userid': '1',
+                //     'language': 'ts',
+                //     'project': this.ProjectName,
+                //     'os': 'windows',
+                //     'stTime': new Date(this.codeData.firstCodingTime).toISOString().slice(0, 19).replace('T', ' '),
+                //     'edTime': new Date(this.codeData.lastCodingTime).toISOString().slice(0, 19).replace('T', ' '),
+                //     'editor': 'VSCode/' + vscode.version,
+                // })
+            });
+            // console.log(response);
+            if (response.status === 200 || response.status === 201 || response.status === 202) {
+                if (this.enableStatusBar) {
+                    // this.getCodingActivity();
+                    console.log(`Sending Successfully at ${utils.formatDate(new Date())}`);
+                }
+            } else {
+                if (response && response.status === 401) {
+                    console.log(`wrong ${utils.formatDate(new Date())}`);
+                } else {
+                    console.log(`error ${utils.formatDate(new Date())}`);
+                }
+            }
+        } catch (ex) {
+            console.log(`Sending Error: ${ex}`);
+        }
+    }
+
     //Handler VSCode Event
     public EventHandler = {
         onActiveFileChange: (doc) => {
+            this.postMan();
             var now = Date.now();
             this.activeDocument = utils.cloneTextDocument(doc);
             this.codeData.openTime = now;
@@ -63,7 +129,7 @@ export class RepoTime {
             this.codeData.codingLong += 1000;
             this.codeData.lastCodingTime = now;
             this.updateStatusBarText(utils.formatTime(this.codeData.codingLong));
-            console.log(utils.formatTime(this.codeData.codingLong));
+            // console.log(utils.formatTime(this.codeData.codingLong));
         }
     };
 

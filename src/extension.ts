@@ -20,10 +20,11 @@ export function activate(context: vscode.ExtensionContext) {
 				return rt.EventHandler.onActiveFileChange((e || {}).document);
 			}));
 	rt.initialize();
-	const { onDidChangeConfiguration } = vscode.workspace;
 	//Listening configurations
+	rt.updateConfigurations();
+	const { onDidChangeConfiguration } = vscode.workspace;
 	subscriptions.push(
-		onDidChangeConfiguration(() => rt.initialize())
+		onDidChangeConfiguration(() => rt.updateConfigurations())
 	);
 	// vscode.workspace.onDidChangeConfiguration(rt.initialize);
 

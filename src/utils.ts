@@ -1,5 +1,4 @@
-var vscode = require('vscode');
-
+import * as vscode from 'vscode';
 
 function cloneTextDocument(doc) {
     if (!doc) { return null; }
@@ -23,7 +22,7 @@ function cloneUri(uri) {
     return vscode.Uri.parse(uri.toString());
 }
 
-function formatTime(time):String {
+function formatTime(time): String {
     var sec = Math.round(time / 1000);
     var min = Math.round(sec / 60);
     var hour = Math.round(min / 60);
@@ -31,16 +30,19 @@ function formatTime(time):String {
     min = min % 60;
     hour = hour % 24;
 
-    if (hour === 0){
-        if(min === 0){
-            return `${sec < 10 ? `0${sec}` : sec }s`;
-        }else{
-            return `${min < 10 ? `0${min}` : min }m ${sec < 10 ? `0${sec}` : sec }s`;
+    if (hour === 0) {
+        if (min === 0) {
+            return `${sec < 10 ? `0${sec}` : sec}s`;
+        } else {
+            return `${min < 10 ? `0${min}` : min}m ${sec < 10 ? `0${sec}` : sec}s`;
         }
-    }else{
-        return `${hour < 10 ? `0${hour}` : hour }h ${min < 10 ? `0${min}` : min }m ${sec < 10 ? `0${sec}` : sec }s`;
+    } else {
+        return `${hour < 10 ? `0${hour}` : hour}h ${min < 10 ? `0${min}` : min}m ${sec < 10 ? `0${sec}` : sec}s`;
     }
-
 }
 
-module.exports = { cloneTextDocument, cloneUri, formatTime };
+function formatDate(date: Date): String {
+    return new Date(date).toISOString().slice(0, 19).replace('T', ' ');
+}
+
+module.exports = { cloneTextDocument, cloneUri, formatTime, formatDate };
