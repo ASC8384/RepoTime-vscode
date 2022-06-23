@@ -17,6 +17,7 @@ export class RepoTime {
         lastCodingTime: 0,
         language: ""
     };
+    private serverURL: string;
     private statusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left,
     );// vscode.StatusBarItem = undefined;
@@ -50,6 +51,7 @@ export class RepoTime {
         this.userid = configurations.get('userid');
         this.minTime = Number(configurations.get('minTime')) * 1000;
         this.maxTime = Number(configurations.get('maxTime')) * 1000;
+        this.serverURL = configurations.get('serverURL');
         // this.statusBar = vscode.window.createStatusBarItem(
         //     vscode.StatusBarAlignment.Left,
         // );
@@ -88,7 +90,7 @@ export class RepoTime {
             params.append('editor', 'VSCode/' + vscode.version);
             const response = await axios({
                 method: 'post',
-                url: 'http://106.15.48.207:8080/addData',
+                url: `${this.serverURL}/addData`,
                 data: params
             });
             // console.log(response);
