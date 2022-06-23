@@ -27,7 +27,7 @@ export class RepoTime {
     private ProjectName: string;
 
     // 需要忽略的一些模式
-    const INVALID_SCHEMES = [
+    private INVALID_SCHEMES = [
         // git 相关
         'git-index',
         'git',

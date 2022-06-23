@@ -45,7 +45,7 @@
 					"description": "Maximum upload interval"
 				},
 				"repotime.serverURL": {
-					"type": "number",
+					"type": "string",
 					"default": "http://106.15.48.207:8080",
 					"description": "Server's URL"
 				}
