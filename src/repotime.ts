@@ -3,15 +3,17 @@ import * as os from 'os';
 var utils = require("./utils");
 const axios = require('axios');
 
-
 export class RepoTime {
     private userid: string;
     private os: string;
     private arch: string;
+    private minTime: number;
+    private maxTime: number;
     private codeData = {
         openTime: 0,
         firstCodingTime: 0,
         codingLong: 0,
+        nowcodingLong: 0,
         lastCodingTime: 0,
         language: ""
     };
@@ -39,13 +41,15 @@ export class RepoTime {
         }
         var now = Date.now();
         this.codeData.openTime = now;
-        this.codeData.codingLong = this.codeData.lastCodingTime = this.codeData.firstCodingTime = 0;
+        this.codeData.codingLong = this.codeData.nowcodingLong = this.codeData.lastCodingTime = this.codeData.firstCodingTime = 0;
     }
 
     public updateConfigurations(): void {
         var configurations = vscode.workspace.getConfiguration('repotime');
         this.enableStatusBar = configurations.get('showStatus');
         this.userid = configurations.get('userid');
+        this.minTime = Number(configurations.get('minTime')) * 1000;
+        this.maxTime = Number(configurations.get('maxTime')) * 1000;
         // this.statusBar = vscode.window.createStatusBarItem(
         //     vscode.StatusBarAlignment.Left,
         // );
@@ -56,7 +60,6 @@ export class RepoTime {
             this.statusBar?.hide();
             console.log('Status bar icon disable.');
         }
-
         this.updateStatusBarText("");
         // console.log("enableStatusBar: " + this.enableStatusBar);
         // console.log(this.userid);
@@ -113,24 +116,40 @@ export class RepoTime {
             var now = Date.now();
             this.codeData.language = this.getLanguage(doc);
             this.codeData.openTime = now;
-            this.codeData.codingLong = this.codeData.lastCodingTime = this.codeData.firstCodingTime = 0;
+            this.codeData.codingLong = this.codeData.nowcodingLong = this.codeData.lastCodingTime = this.codeData.firstCodingTime = 0;
         },
         onFileCoding: (doc) => {
             //ignore event if it is not a coding action
             if (!doc || doc.uri.scheme === 'git-index') { return; }
             var now = Date.now();
             //If time is too short to calling this function then just ignore it
-            if (now - 1000 < this.codeData.lastCodingTime) { return; }
-            //If is first time coding in this file, begin to record time
-            if (!this.codeData.firstCodingTime) {
-                this.codeData.firstCodingTime = now;
+            if (this.isLegalTime(now)) {
+                //If is first time coding in this file, begin to record time
+                if (!this.codeData.firstCodingTime) {
+                    this.codeData.firstCodingTime = now;
+                }
+                // If need to upload
+                if(this.isNeedUpdate()){
+                    this.postMan();
+                    this.codeData.nowcodingLong = 0;
+                    this.codeData.firstCodingTime = now - 1000;
+                }
+                this.codeData.codingLong += 1000;
+                this.codeData.nowcodingLong += 1000;
+                this.codeData.lastCodingTime = now;
+                this.updateStatusBarText(utils.formatTime(this.codeData.codingLong));
             }
-            this.codeData.codingLong += 1000;
-            this.codeData.lastCodingTime = now;
-            this.updateStatusBarText(utils.formatTime(this.codeData.codingLong));
             // console.log(utils.formatTime(this.codeData.codingLong));
         }
     };
+
+    private isNeedUpdate(): boolean {
+        return this.maxTime < this.codeData.nowcodingLong;
+    }
+
+    private isLegalTime(now: number): boolean {
+        return now - this.minTime >= this.codeData.lastCodingTime;
+    }
 
     public getProjectName(file: string): string {
         if (!vscode.workspace) { return ''; }

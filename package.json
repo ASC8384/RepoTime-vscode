@@ -33,6 +33,16 @@
 					"type": "string",
 					"default": "1",
 					"description": "Your user ID from the website"
+				},
+				"repotime.minTime": {
+					"type": "number",
+					"default": 1,
+					"description": "Minimum recording time"
+				},
+				"repotime.maxTime": {
+					"type": "number",
+					"default": 10,
+					"description": "Maximum upload interval"
 				}
 			}
 		}
