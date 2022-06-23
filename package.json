@@ -28,6 +28,11 @@
 					"type": "boolean",
 					"default": true,
 					"description": "Display coding status on the left status bar"
+				},
+				"repotime.userid": {
+					"type": "string",
+					"default": "1",
+					"description": "Your user ID from the website"
 				}
 			}
 		}

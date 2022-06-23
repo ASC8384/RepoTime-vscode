@@ -1,23 +1,27 @@
 import * as vscode from 'vscode';
+import * as os from 'os';
 var utils = require("./utils");
 const axios = require('axios');
 
 
 export class RepoTime {
-    private activeDocument;
+    private userid: string;
+    private os: string;
+    private arch: string;
     private codeData = {
         openTime: 0,
         firstCodingTime: 0,
         codingLong: 0,
-        lastCodingTime: 0
+        lastCodingTime: 0,
+        language: ""
     };
     private statusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left,
     );// vscode.StatusBarItem = undefined;
     private enableStatusBar: boolean;
     private version = "0.0.1";
-    private ProjectFolder;
-    private ProjectName;
+    private ProjectFolder: string;
+    private ProjectName: string;
 
     public initialize(): void {
         let editor = vscode.window.activeTextEditor;
@@ -28,6 +32,8 @@ export class RepoTime {
                 if (file) {
                     this.ProjectFolder = this.getProjectFolder(file);
                     this.ProjectName = this.getProjectName(file);
+                    this.os = this.getOS();
+                    this.arch = this.getArch();
                 }
             }
         }
@@ -39,6 +45,7 @@ export class RepoTime {
     public updateConfigurations(): void {
         var configurations = vscode.workspace.getConfiguration('repotime');
         this.enableStatusBar = configurations.get('showStatus');
+        this.userid = configurations.get('userid');
         // this.statusBar = vscode.window.createStatusBarItem(
         //     vscode.StatusBarAlignment.Left,
         // );
@@ -51,8 +58,8 @@ export class RepoTime {
         }
 
         this.updateStatusBarText("");
-        console.log("enableStatusBar: " + this.enableStatusBar);
-        console.log(this.statusBar);
+        // console.log("enableStatusBar: " + this.enableStatusBar);
+        // console.log(this.userid);
     }
 
     private updateStatusBarText(text?: string): void {
@@ -68,10 +75,11 @@ export class RepoTime {
         if (this.codeData.firstCodingTime === 0) { return; }
         try {
             const params = new URLSearchParams();
-            params.append('userid', '1');
-            params.append('language', 'ts');
+            params.append('userid', this.userid);
+            params.append('language', this.codeData.language);
             params.append('project', this.ProjectName);
-            params.append('os', 'windows');
+            params.append('os', this.os);
+            params.append('arch', this.arch);
             params.append('stTime', utils.formatDate(this.codeData.firstCodingTime));
             params.append('edTime', utils.formatDate(this.codeData.lastCodingTime));
             params.append('editor', 'VSCode/' + vscode.version);
@@ -79,15 +87,6 @@ export class RepoTime {
                 method: 'post',
                 url: 'http://106.15.48.207:8080/addData',
                 data: params
-                // data: JSON.stringify({
-                //     'userid': '1',
-                //     'language': 'ts',
-                //     'project': this.ProjectName,
-                //     'os': 'windows',
-                //     'stTime': new Date(this.codeData.firstCodingTime).toISOString().slice(0, 19).replace('T', ' '),
-                //     'edTime': new Date(this.codeData.lastCodingTime).toISOString().slice(0, 19).replace('T', ' '),
-                //     'editor': 'VSCode/' + vscode.version,
-                // })
             });
             // console.log(response);
             if (response.status === 200 || response.status === 201 || response.status === 202) {
@@ -112,7 +111,7 @@ export class RepoTime {
         onActiveFileChange: (doc) => {
             this.postMan();
             var now = Date.now();
-            this.activeDocument = utils.cloneTextDocument(doc);
+            this.codeData.language = this.getLanguage(doc);
             this.codeData.openTime = now;
             this.codeData.codingLong = this.codeData.lastCodingTime = this.codeData.firstCodingTime = 0;
         },
@@ -161,6 +160,25 @@ export class RepoTime {
             return vscode.workspace.workspaceFolders[0].uri.fsPath;
         }
         return '';
+    }
+
+    private getLanguage(doc: vscode.TextDocument): string {
+        return doc.languageId || '';
+    }
+
+    private getOS(): string {
+        let osname = os.platform() as string;
+        if (osname === 'win32') {
+            osname = 'windows';
+        }
+        return osname;
+    }
+
+    private getArch(): string {
+        const arch = os.arch();
+        if (arch.indexOf('32') > -1) { return '386'; }
+        if (arch.indexOf('x64') > -1) { return 'amd64'; }
+        return arch;
     }
 
     public getCodeData(foo: string): string {
